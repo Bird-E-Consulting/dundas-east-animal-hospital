@@ -101,10 +101,6 @@ def icon(name):
     return f'<svg class="icon" aria-hidden="true" focusable="false"><use href="{BASE}/assets/icons.svg#{name}"></use></svg>'
 
 
-def disclosure(label, content, class_name='content-dropdown'):
-    return f'<details class="{class_name}"><summary>{html.escape(label)}</summary><div class="dropdown-content">{content}</div></details>'
-
-
 def replace_icons(markup):
     for glyph, name in {'✳':'brand', '♡':'heart', '⌂':'clinic', '✓':'check', '↗':'external', '→':'arrow'}.items():
         markup = markup.replace(glyph, icon(name))
@@ -112,12 +108,21 @@ def replace_icons(markup):
 
 
 def service_menu():
-    return '<div class="service-accordions">' + ''.join(
-        disclosure(slug_title(by_slug[slug]), '<p>'+html.escape(description(by_slug[slug]))+'</p><a class="text-link" href="'+href(slug)+'">Explore this service ↗</a>')
+    summaries = {
+        'wellness-and-preventive-care': ('Wellness & prevention', 'Exams, vaccinations and preventive care for every stage of life.'),
+        'laser-surgery': ('Laser surgery', 'Explore surgical options tailored to cats and dogs.'),
+        'in-house-laboratory-diagnostics': ('Laboratory diagnostics', 'On-site bloodwork and urinalysis to help guide care.'),
+        'in-house-medical-imaging': ('Medical imaging', 'X-rays, ultrasound and ECG for a clearer picture.'),
+        'reference-laboratory-testing': ('Reference laboratory', 'Specialized testing with support from trusted laboratories.'),
+        'dentistry-services': ('Dental care', 'Dental exams, cleaning, extractions and home-care guidance.'),
+        'surgical-services': ('Surgical services', 'Routine and advanced procedures, with specialist referrals when needed.')
+    }
+    return '<div class="service-cards">' + ''.join(
+        '<article class="service-card"><h3><a href="'+href(slug)+'">'+html.escape(summaries[slug][0])+'</a></h3><p>'+html.escape(summaries[slug][1])+'</p><a class="service-link" href="'+href(slug)+'" aria-label="Learn about '+html.escape(slug_title(by_slug[slug]),quote=True)+'">Explore care ↗</a></article>'
         for slug in SERVICES) + '</div>'
 
 
-def folded_body(record):
+def sectioned_body(record):
     markup = original_body(record)
     labels = {
         'about-us': ['Serving Mississauga since 2010', 'Our services and technology', 'A personal approach', 'Our community relationships', 'A long-term partner in pet health'],
@@ -142,12 +147,12 @@ def folded_body(record):
         raise ValueError('Unexpected paragraph structure: '+record['slug'])
     starts[0] = 0
     starts.append(len(markup))
-    return '<p class="article-intro">'+html.escape(description(record))+'</p><p class="expand-hint">Select a topic to read more.</p><div class="article-accordions">'+''.join(disclosure(label, markup[starts[i]:starts[i+1]]) for i,label in enumerate(labels))+'</div>'
+    return '<div class="reading-sections">'+''.join('<section class="reading-section" id="topic-'+str(i+1)+'"><h2>'+html.escape(label)+'</h2>'+markup[starts[i]:starts[i+1]]+'</section>' for i,label in enumerate(labels))+'</div>'
 
 
 def cards(records):
     return '<div class="content-grid">' + ''.join(
-        f'<article class="content-card">{image_for(r)}<div><h3><a href="{href(r["slug"])}">{html.escape(slug_title(r))}</a></h3><details class="card-preview"><summary>Preview article</summary><p>{html.escape(description(r))}</p></details><a class="text-link" href="{href(r["slug"])}">Read more ↗</a></div></article>'
+        f'<article class="content-card">{image_for(r)}<div><h3><a href="{href(r["slug"])}">{html.escape(slug_title(r))}</a></h3><p>{html.escape(description(r))}</p><a class="text-link" href="{href(r["slug"])}">Read more ↗</a></div></article>'
         for r in records) + '</div>'
 
 
@@ -243,7 +248,7 @@ def page(record, body, heading=None):
     canonical = ORIGIN + '/' + (slug + '/' if slug != 'home' else '')
     page_title = ('Veterinarian in Mississauga | Dundas East Animal Hospital' if slug == 'home' else title + ' | Dundas East Animal Hospital')
     desc = description(record)
-    return replace_icons(f'''<!doctype html><html lang="en-CA"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="{'index,follow' if PRODUCTION and slug not in EXCLUDE_SEO else 'noindex,follow'}"><meta name="theme-color" content="#183d41"><title>{html.escape(page_title)}</title><meta name="description" content="{html.escape(desc, quote=True)}"><link rel="canonical" href="{canonical}"><meta property="og:type" content="{'article' if record['kind']=='posts' else 'website'}"><meta property="og:title" content="{html.escape(page_title, quote=True)}"><meta property="og:description" content="{html.escape(desc, quote=True)}"><meta property="og:url" content="{canonical}"><meta property="og:site_name" content="Dundas East Animal Hospital"><meta property="og:image" content="{ORIGIN}/wp-content/uploads/2025/04/Dr-V-Singla.jpg"><meta name="twitter:card" content="summary_large_image"><link rel="icon" href="{BASE}/assets/clinic-icon.png"><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="{BASE}/style.css?v=3"><link rel="stylesheet" href="{BASE}/content-layout.css?v=3"><script type="application/ld+json">{schema(record,title,canonical)}</script></head><body>{header}<main id="main-content">{body}</main>{footer}</body></html>''')
+    return replace_icons(f'''<!doctype html><html lang="en-CA"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="{'index,follow' if PRODUCTION and slug not in EXCLUDE_SEO else 'noindex,follow'}"><meta name="theme-color" content="#183d41"><title>{html.escape(page_title)}</title><meta name="description" content="{html.escape(desc, quote=True)}"><link rel="canonical" href="{canonical}"><meta property="og:type" content="{'article' if record['kind']=='posts' else 'website'}"><meta property="og:title" content="{html.escape(page_title, quote=True)}"><meta property="og:description" content="{html.escape(desc, quote=True)}"><meta property="og:url" content="{canonical}"><meta property="og:site_name" content="Dundas East Animal Hospital"><meta property="og:image" content="{ORIGIN}/wp-content/uploads/2025/04/Dr-V-Singla.jpg"><meta name="twitter:card" content="summary_large_image"><link rel="icon" href="{BASE}/assets/clinic-icon.png"><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="{BASE}/style.css?v=4"><link rel="stylesheet" href="{BASE}/content-layout.css?v=4"><script type="application/ld+json">{schema(record,title,canonical)}</script></head><body>{header}<main id="main-content">{body}</main>{footer}</body></html>''')
 
 
 def heading(record, label='YOUR NEIGHBOURHOOD VETERINARY TEAM'):
@@ -293,7 +298,7 @@ for record in records:
     else:
         if record['kind'] == 'posts':
             body += f'<div class="wrap article-meta">Originally published <time datetime="{record["date"]}">{record["date"][:10]}</time> · Original hospital article</div>'
-        body += '<section class="wrap article-layout"><article class="source-content">' + image_for(record) + folded_body(record) + '</article><aside class="article-sidebar"><p class="eyebrow">HERE FOR YOUR PET</p><h2>A question about care?</h2><p>Talk with our team about your pet’s individual needs.</p><a class="button" href="tel:+19058038400">Call (905) 803-8400</a><details class="sidebar-services"><summary>Explore our services</summary><ul>' + service_links + '</ul></details></aside></section>'
+        body += '<section class="wrap article-layout"><article class="source-content">' + image_for(record) + sectioned_body(record) + '</article><aside class="article-sidebar"><p class="eyebrow">HERE FOR YOUR PET</p><h2>A question about care?</h2><p>Talk with our team about your pet’s individual needs.</p><a class="button" href="tel:+19058038400">Call (905) 803-8400</a><details class="sidebar-services"><summary>Explore our services</summary><ul>' + service_links + '</ul></details></aside></section>'
         if record['kind'] == 'posts':
             body += '<section class="wrap section"><p class="eyebrow">KEEP READING</p><h2>More from the pet health journal.</h2>' + cards([p for p in posts if p['id']!=record['id']][:3]) + '</section>'
     body += f'<section class="wrap page-cta"><h2>Let’s take the next step together.</h2><a class="button" href="{href("contact-us")}">Contact our team ↗</a></section>'
@@ -329,13 +334,13 @@ features = [
     ('Modern technology', 'Advanced diagnostic and treatment tools support your pet’s care.'),
     ('Convenient services', 'From consultations to flexible appointments, we make pet care easy.')
 ]
-home_body += '<section class="hospital-story"><div class="wrap section"><p class="eyebrow">WHY CHOOSE DUNDAS EAST?</p><h2>Your pet’s health and happiness.<br>Our top priority.</h2><p class="story-intro">From routine checkups to advanced treatments, we’re here with compassionate, expert care every step of the way.</p><div class="feature-grid">' + ''.join(disclosure(title, '<p>'+text+'</p>') for title,text in features) + '</div><details class="care-details"><summary>Our approach, care options &amp; urgent enquiries</summary><div class="care-overview"><div><h3>Personalized, comprehensive care.</h3><p>Our team, modern diagnostics and clean facility support care tailored to your pet, from routine exams to advanced treatments.</p><ul><li>Wellness exams, vaccinations, surgeries and dental care.</li><li>Digital X-rays and ultrasound for precise results.</li><li>Convenient appointments and easy scheduling.</li></ul></div><div><h3>Don’t hesitate to contact us.</h3><p>Whether it’s a quick question or an urgent concern, our friendly team is here to assist you and your pet.</p><p>The original site says “Available anytime your pet needs urgent care.” Please call to confirm availability; this demo does not confirm 24-hour service.</p><a class="button" href="'+href('contact-us')+'">Contact our team ↗</a></div></div></details><details class="source-archive"><summary>Read the original homepage wording in full</summary><div class="source-content">' + home_source + '</div></details></div></section>'
+home_body += '<section class="hospital-story"><div class="wrap section"><p class="eyebrow">WHY CHOOSE DUNDAS EAST?</p><h2>Your pet’s health and happiness.<br>Our top priority.</h2><p class="story-intro">From routine checkups to advanced treatments, we’re here with compassionate, expert care every step of the way.</p><div class="feature-grid">' + ''.join('<article class="highlight-card"><h3>'+title+'</h3><p>'+text+'</p></article>' for title,text in features) + '</div><div class="care-overview"><div><h3>Personalized, comprehensive care.</h3><p>Our team, modern diagnostics and clean facility support care tailored to your pet, from routine exams to advanced treatments.</p><ul><li>Wellness exams, vaccinations, surgeries and dental care.</li><li>Digital X-rays and ultrasound for precise results.</li><li>Convenient appointments and easy scheduling.</li></ul></div><div><h3>Don’t hesitate to contact us.</h3><p>Whether it’s a quick question or an urgent concern, our friendly team is here to assist you and your pet.</p><p>The original site says “Available anytime your pet needs urgent care.” Please call to confirm availability; this demo does not confirm 24-hour service.</p><a class="button" href="'+href('contact-us')+'">Contact our team ↗</a></div></div><details class="source-archive"><summary>Read the original homepage wording in full</summary><div class="source-content">' + home_source + '</div></details></div></section>'
 reviews = home_record.get('reviews', [])
-home_body += '<section class="wrap section"><p class="eyebrow">OUR COMMUNITY</p><div class="section-heading"><h2>Kind words from pet families.</h2><div><strong>EXCELLENT</strong><p class="field-note">Based on 235 reviews on the original website</p></div></div><p class="field-note">Google review excerpts retained from the original website snapshot; this is not a live rating feed. The original widget states that Trustindex verified Google as the review source.</p><details class="reviews-dropdown"><summary>Read all 8 client reviews</summary><div class="reviews-grid">' + ''.join('<figure><blockquote>'+html.escape(review['text'])+'</blockquote><figcaption>'+html.escape(review['name'])+' <span>· Google review</span></figcaption></figure>' for review in reviews) + '</div></details></section>'
+home_body += '<section class="wrap section"><p class="eyebrow">OUR COMMUNITY</p><div class="section-heading"><h2>Kind words from pet families.</h2><div><strong>EXCELLENT</strong><p class="field-note">Based on 235 reviews on the original website</p></div></div><p class="field-note">Google review excerpts retained from the original website snapshot; this is not a live rating feed. The original widget states that Trustindex verified Google as the review source.</p><div class="reviews-grid">' + ''.join('<figure><blockquote>'+html.escape(review['text'])+'</blockquote><figcaption>'+html.escape(review['name'])+' <span>· Google review</span></figcaption></figure>' for review in reviews) + '</div></section>'
 home_body += '<section class="wrap section"><div class="section-heading"><div><p class="eyebrow">MEET YOUR TEAM</p><h2>People behind the care.</h2></div><a class="text-link" href="'+href('team')+'">Meet all four doctors ↗</a></div><div class="doctor-grid">' + ''.join(f'<article><img src="{BASE}/assets/{image}" alt="{name}" width="820" height="1024" loading="lazy"><h3>{name}</h3><p>DVM, BVSc &amp; AH</p></article>' for name,image in team_names) + '</div></section>'
 home_body += portal + '<section class="wrap section"><div class="section-heading"><div><p class="eyebrow">THE PET HEALTH JOURNAL</p><h2>Helpful reading. Healthier pets.</h2></div><a class="text-link" href="'+href('blog')+'">All eight articles ↗</a></div>'+cards(posts[:3])+'</section><section class="wrap section"><p class="eyebrow">TWO MISSISSAUGA LOCATIONS</p><h2>Find your familiar place.</h2>'+contact_cards()+'</section>'
 home_html = page(home_record, home_body)
-home_html = home_html.replace('</head>', f'<script src="{BASE}/app.js?v=3" defer></script></head>').replace('</body>',dialog+'</body>')
+home_html = home_html.replace('</head>', f'<script src="{BASE}/app.js?v=4" defer></script></head>').replace('</body>',dialog+'</body>')
 (ROOT / 'index.html').write_text(home_html, encoding='utf-8', newline='\n')
 (ROOT/'home').mkdir(exist_ok=True)
 (ROOT/'home/index.html').write_text(home_html, encoding='utf-8', newline='\n')

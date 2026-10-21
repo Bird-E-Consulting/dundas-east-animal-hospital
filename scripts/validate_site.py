@@ -17,6 +17,9 @@ class Document(HTMLParser):
         self.refs = []
         self.meta = {}
         self.h1 = 0
+        self.details_depth = 0
+        self.visible_reviews = 0
+        self.hidden_reviews = 0
         self.words = []
         self.scripts = []
         self.in_json = False
@@ -33,6 +36,13 @@ class Document(HTMLParser):
         if tag == 'script' and attrs.get('type') == 'application/ld+json':
             self.in_json = True
             self.json_text = ''
+        if tag == 'details':
+            self.details_depth += 1
+        if tag == 'figure':
+            if self.details_depth:
+                self.hidden_reviews += 1
+            else:
+                self.visible_reviews += 1
         if tag == 'h1':
             self.h1 += 1
         if tag in {'p','li'} and self.block is None:
@@ -46,6 +56,8 @@ class Document(HTMLParser):
                 self.refs.append(attrs[name])
 
     def handle_endtag(self, tag):
+        if tag == 'details':
+            self.details_depth = max(0, self.details_depth - 1)
         if tag == 'script' and self.in_json:
             self.scripts.append(json.loads(self.json_text))
             self.in_json = False
@@ -122,6 +134,9 @@ for record in snapshot['records']:
 
 if emoji_artwork.search((ROOT/'app.js').read_text(encoding='utf-8')):
     errors.append('Emoji artwork remains in the payment portal')
+home_doc = documents[ROOT/'index.html']
+if home_doc.visible_reviews != 8 or home_doc.hidden_reviews:
+    errors.append('All eight client reviews must remain visible outside dropdowns')
 home = (ROOT/'index.html').read_text(encoding='utf-8')
 for name in ['Dr V Singla','Dr G Pandher','Dr H Bansal','Dr S Pandher','Ryan Beckwith','Sally Altohme','Natalie Birks','Ashley Camilleri','Jay Ramani','Harjeet Sembhi','Akash Akash','Rodolfo Garcia']:
     if name not in home:

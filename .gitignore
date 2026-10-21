@@ -4,3 +4,5 @@ node_modules/
 .env
 .env.*
 demo-screenshot.png
+.audit/
+__pycache__/

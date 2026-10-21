@@ -1,0 +1,4 @@
+# Demo: page-level noindex prevents indexing while allowing crawlers to read it.
+# Production: remove noindex only after moving to the clinic domain.
+User-agent: *
+Allow: /

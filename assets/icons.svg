@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg"><defs>
+<symbol id="brand" viewBox="0 0 32 32"><path d="M16 3v26M3 16h26M7 7l18 18M7 25 25 7"/></symbol>
+<symbol id="heart" viewBox="0 0 24 24"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1.1-1.1a5.5 5.5 0 0 0-7.8 7.8L12 21l8.8-8.6a5.5 5.5 0 0 0 0-7.8Z"/></symbol>
+<symbol id="clinic" viewBox="0 0 24 24"><path d="m3 10 9-7 9 7v11H3V10Zm6 11v-7h6v7M9 8h6m-3-3v6"/></symbol>
+<symbol id="check" viewBox="0 0 24 24"><path d="m5 12 4 4L19 6"/></symbol>
+<symbol id="external" viewBox="0 0 24 24"><path d="M6 18 18 6M6 6h12v12"/></symbol>
+<symbol id="arrow" viewBox="0 0 24 24"><path d="M4 12h16m-6-6 6 6-6 6"/></symbol>
+<symbol id="dog" viewBox="0 0 32 32"><path d="m8 13-4 5V9l7-4 5 4 5-4 7 4v9l-4-5v10l-8 5-8-5V13Z"/><path d="M12 16h.1M20 16h.1m-7 5 3 2 3-2m-3 2v4"/></symbol>
+<symbol id="cat" viewBox="0 0 32 32"><path d="M6 15V4l9 7h2l9-7v11a10 10 0 0 1-20 0Z"/><path d="M11 17h.1M21 17h.1m-7 5 2 2 2-2M4 20l6 1m-6 4 6-2m18-3-6 1m6 4-6-2"/></symbol>
+<symbol id="tooth" viewBox="0 0 32 32"><path d="M16 7c-9-7-15 0-11 9 2 4 1 12 5 12 3 0 2-9 6-9s3 9 6 9c4 0 3-8 5-12 4-9-2-16-11-9Z"/><path d="m13 6 6 3"/></symbol>
+<symbol id="treat" viewBox="0 0 32 32"><path d="M13 8a5 5 0 0 0-9 4 5 5 0 0 0 4 9l11-11a5 5 0 0 1 9 4 5 5 0 0 1-4 9 5 5 0 0 1-4 5 5 5 0 0 1-5-3L4 14"/></symbol>
+</defs></svg>

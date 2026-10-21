@@ -69,12 +69,16 @@ def normalize(text):
 
 
 errors = []
+emoji_artwork = re.compile(r'[\U0001F300-\U0001FAFF\u2733\u2661\u2302\u2713]')
 documents = {}
 for file in ROOT.rglob('*.html'):
     if any(part in {'.git','.audit','templates'} for part in file.parts):
         continue
     doc = Document()
-    doc.feed(file.read_text(encoding='utf-8'))
+    markup = file.read_text(encoding='utf-8')
+    doc.feed(markup)
+    if emoji_artwork.search(markup):
+        errors.append(f'{file.relative_to(ROOT)}: font-based emoji artwork remains')
     documents[file] = doc
     if doc.h1 != 1:
         errors.append(f'{file.relative_to(ROOT)}: expected one H1, found {doc.h1}')
@@ -116,6 +120,8 @@ for record in snapshot['records']:
                 errors.append(f'Lost original content on {slug}: {block[:100]}')
             checked_blocks += 1
 
+if emoji_artwork.search((ROOT/'app.js').read_text(encoding='utf-8')):
+    errors.append('Emoji artwork remains in the payment portal')
 home = (ROOT/'index.html').read_text(encoding='utf-8')
 for name in ['Dr V Singla','Dr G Pandher','Dr H Bansal','Dr S Pandher','Ryan Beckwith','Sally Altohme','Natalie Birks','Ashley Camilleri','Jay Ramani','Harjeet Sembhi','Akash Akash','Rodolfo Garcia']:
     if name not in home:

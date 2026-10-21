@@ -8,7 +8,7 @@ http.createServer(async (req, res) => {
   if (!file.startsWith(root + path.sep)) { res.writeHead(403); res.end(); return; }
   try {
     const body = await fs.readFile(file);
-    const types = {'.html':'text/html', '.css':'text/css', '.js':'text/javascript', '.jpg':'image/jpeg', '.png':'image/png', '.json':'application/json', '.xml':'application/xml'};
+    const types = {'.html':'text/html', '.css':'text/css', '.js':'text/javascript', '.jpg':'image/jpeg', '.png':'image/png', '.svg':'image/svg+xml', '.json':'application/json', '.xml':'application/xml'};
     res.setHeader('Content-Type', types[path.extname(file)] || 'text/plain');
     res.end(body);
   } catch { res.writeHead(404); res.end('Not found'); }

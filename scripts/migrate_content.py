@@ -97,9 +97,57 @@ def href(slug=''):
     return BASE + '/' + (slug + '/' if slug else '')
 
 
+def icon(name):
+    return f'<svg class="icon" aria-hidden="true" focusable="false"><use href="{BASE}/assets/icons.svg#{name}"></use></svg>'
+
+
+def disclosure(label, content, class_name='content-dropdown'):
+    return f'<details class="{class_name}"><summary>{html.escape(label)}</summary><div class="dropdown-content">{content}</div></details>'
+
+
+def replace_icons(markup):
+    for glyph, name in {'✳':'brand', '♡':'heart', '⌂':'clinic', '✓':'check', '↗':'external', '→':'arrow'}.items():
+        markup = markup.replace(glyph, icon(name))
+    return markup
+
+
+def service_menu():
+    return '<div class="service-accordions">' + ''.join(
+        disclosure(slug_title(by_slug[slug]), '<p>'+html.escape(description(by_slug[slug]))+'</p><a class="text-link" href="'+href(slug)+'">Explore this service ↗</a>')
+        for slug in SERVICES) + '</div>'
+
+
+def folded_body(record):
+    markup = original_body(record)
+    labels = {
+        'about-us': ['Serving Mississauga since 2010', 'Our services and technology', 'A personal approach', 'Our community relationships', 'A long-term partner in pet health'],
+        'surgical-services': ['Surgical care, safety and procedures'],
+        'dentistry-services': ['Dental health and warning signs', 'Annual dental assessments', 'Examinations and cleaning', 'How dental disease affects overall health', 'Home care and dental services'],
+        'wellness-and-preventive-care': ['Why preventive care matters', 'Wellness visits and available services'],
+        'laser-surgery': ['Care tailored to cats and dogs', 'Recognizing signs of illness', 'Laser surgery and its uses', 'Prevention and everyday health', 'Advances in veterinary care'],
+        'in-house-medical-imaging': ['About medical imaging', 'X-rays, ultrasound and ECG', 'Our diagnostic approach'],
+        'in-house-laboratory-diagnostics': ['About in-house testing', 'Results and timely care', 'Early detection', 'Available tests and reference laboratories', 'Questions and appointments'],
+        'reference-laboratory-testing': ['About reference testing', 'When specialized testing is needed', 'Specialists and available tests', 'Questions about testing'],
+        'how-weather-changes-affect-your-pets-health': ['Seasonal changes and warmer weather', 'Allergies, parasites and colder weather', 'Winter skin care and next steps'],
+        'pet-allergies-symptoms-causes-and-treatments': ['Understanding allergies', 'Common symptoms', 'Causes of allergies', 'Environmental allergies', 'Food and flea allergies', 'Treatment options', 'Support from our team'],
+        'understanding-common-skin-conditions-in-pets': ['Common skin concerns', 'Hot spots and other skin conditions', 'When to contact the clinic'],
+        'spay-or-neuter-what-every-pet-owner-should-consider': ['Spaying, neutering and health', 'Population and behaviour considerations', 'Discussing the right time', 'Making an informed decision'],
+        'the-ultimate-guide-to-puppy-and-kitten-care': ['Getting started with your new pet', 'Support as they grow'],
+        'why-annual-vet-checkups-can-save-youre-your-pets-life': ['Why annual checkups matter', 'What happens during a wellness exam', 'Planning the next visit'],
+        'vaccinations-for-pets-what-every-pet-parent-must-know': ['Vaccines and protection', 'Vaccination schedules and individual plans', 'Keeping vaccinations current', 'Prevention and next steps'],
+        '10-signs-your-pet-needs-to-see-a-vet-dont-ignore-them': ['Ten signs to watch for', 'When to seek veterinary care']
+    }[record['slug']]
+    starts = [match.start() for match in re.finditer(r'<p\b[^>]*>.*?</p>', markup, re.S) if plain(match.group())]
+    if len(starts) != len(labels):
+        raise ValueError('Unexpected paragraph structure: '+record['slug'])
+    starts[0] = 0
+    starts.append(len(markup))
+    return '<p class="article-intro">'+html.escape(description(record))+'</p><p class="expand-hint">Select a topic to read more.</p><div class="article-accordions">'+''.join(disclosure(label, markup[starts[i]:starts[i+1]]) for i,label in enumerate(labels))+'</div>'
+
+
 def cards(records):
     return '<div class="content-grid">' + ''.join(
-        f'<article class="content-card">{image_for(r)}<div><h3><a href="{href(r["slug"])}">{html.escape(slug_title(r))}</a></h3><p>{html.escape(description(r))}</p><a class="text-link" href="{href(r["slug"])}">Read more ↗</a></div></article>'
+        f'<article class="content-card">{image_for(r)}<div><h3><a href="{href(r["slug"])}">{html.escape(slug_title(r))}</a></h3><details class="card-preview"><summary>Preview article</summary><p>{html.escape(description(r))}</p></details><a class="text-link" href="{href(r["slug"])}">Read more ↗</a></div></article>'
         for r in records) + '</div>'
 
 
@@ -195,7 +243,7 @@ def page(record, body, heading=None):
     canonical = ORIGIN + '/' + (slug + '/' if slug != 'home' else '')
     page_title = ('Veterinarian in Mississauga | Dundas East Animal Hospital' if slug == 'home' else title + ' | Dundas East Animal Hospital')
     desc = description(record)
-    return f'''<!doctype html><html lang="en-CA"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="{'index,follow' if PRODUCTION and slug not in EXCLUDE_SEO else 'noindex,follow'}"><meta name="theme-color" content="#183d41"><title>{html.escape(page_title)}</title><meta name="description" content="{html.escape(desc, quote=True)}"><link rel="canonical" href="{canonical}"><meta property="og:type" content="{'article' if record['kind']=='posts' else 'website'}"><meta property="og:title" content="{html.escape(page_title, quote=True)}"><meta property="og:description" content="{html.escape(desc, quote=True)}"><meta property="og:url" content="{canonical}"><meta property="og:site_name" content="Dundas East Animal Hospital"><meta property="og:image" content="{ORIGIN}/wp-content/uploads/2025/04/Dr-V-Singla.jpg"><meta name="twitter:card" content="summary_large_image"><link rel="icon" href="{BASE}/assets/clinic-icon.png"><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="{BASE}/style.css"><link rel="stylesheet" href="{BASE}/content-layout.css"><script type="application/ld+json">{schema(record,title,canonical)}</script></head><body>{header}<main id="main-content">{body}</main>{footer}</body></html>'''
+    return replace_icons(f'''<!doctype html><html lang="en-CA"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="{'index,follow' if PRODUCTION and slug not in EXCLUDE_SEO else 'noindex,follow'}"><meta name="theme-color" content="#183d41"><title>{html.escape(page_title)}</title><meta name="description" content="{html.escape(desc, quote=True)}"><link rel="canonical" href="{canonical}"><meta property="og:type" content="{'article' if record['kind']=='posts' else 'website'}"><meta property="og:title" content="{html.escape(page_title, quote=True)}"><meta property="og:description" content="{html.escape(desc, quote=True)}"><meta property="og:url" content="{canonical}"><meta property="og:site_name" content="Dundas East Animal Hospital"><meta property="og:image" content="{ORIGIN}/wp-content/uploads/2025/04/Dr-V-Singla.jpg"><meta name="twitter:card" content="summary_large_image"><link rel="icon" href="{BASE}/assets/clinic-icon.png"><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="{BASE}/style.css"><link rel="stylesheet" href="{BASE}/content-layout.css"><script type="application/ld+json">{schema(record,title,canonical)}</script></head><body>{header}<main id="main-content">{body}</main>{footer}</body></html>''')
 
 
 def heading(record, label='YOUR NEIGHBOURHOOD VETERINARY TEAM'):
@@ -220,7 +268,7 @@ def original_body(record):
 
 
 def contact_cards():
-    return f'''<div class="location-grid"><article class="location"><p class="eyebrow">DUNDAS EAST ANIMAL HOSPITAL</p><h2>Visit us on Dundas East.</h2><address>966 Dundas St. East, Unit 1<br>Mississauga, ON L4Y 4H5</address><p><a href="tel:+19058038400">(905) 803-8400</a><br><a href="mailto:deahstaff@gmail.com">deahstaff@gmail.com</a></p><h3>Published working hours</h3><dl><div><dt>Mon – Fri</dt><dd>8 A.M – 8 P.M</dd></div><div><dt>Wednesday</dt><dd>11 A.M – 6 P.M</dd></div><div><dt>Saturday</dt><dd>9 A.M – 8 P.M</dd></div></dl><p class="field-note">The original site lists both a weekday range and separate Wednesday hours. Please call to confirm; Sunday hours are not published.</p><a class="button" href="https://www.google.com/maps/search/?api=1&query=966+Dundas+St+East+Mississauga">Get directions ↗</a></article><article class="location"><p class="eyebrow">EGLINTON ANIMAL HOSPITAL</p><h2>Our Eglinton location.</h2><address>3435 Eglinton Ave W, Unit 1<br>Mississauga, ON L5M 7Z5</address><p><a href="tel:+19056078400">(905) 607-8400</a><br><a href="mailto:eglintonstaff2007@gmail.com">eglintonstaff2007@gmail.com</a></p><h3>Published working hours</h3><dl><div><dt>Mon – Fri</dt><dd>8 A.M – 8 P.M</dd></div><div><dt>Saturday</dt><dd>9 A.M – 8 P.M</dd></div></dl><p class="field-note">Please call to confirm current availability. Sunday hours are not published.</p><a class="button" href="https://www.google.com/maps/search/?api=1&query=3435+Eglinton+Ave+W+Mississauga">Get directions ↗</a></article></div>'''
+    return f'''<div class="location-grid"><article class="location"><p class="eyebrow">DUNDAS EAST ANIMAL HOSPITAL</p><h2>Visit us on Dundas East.</h2><address>966 Dundas St. East, Unit 1<br>Mississauga, ON L4Y 4H5</address><p><a href="tel:+19058038400">(905) 803-8400</a><br><a href="mailto:deahstaff@gmail.com">deahstaff@gmail.com</a></p><details class="hours-dropdown"><summary>Opening hours &amp; availability</summary><dl><div><dt>Mon – Fri</dt><dd>8 A.M – 8 P.M</dd></div><div><dt>Wednesday</dt><dd>11 A.M – 6 P.M</dd></div><div><dt>Saturday</dt><dd>9 A.M – 8 P.M</dd></div></dl><p class="field-note">The original site lists both a weekday range and separate Wednesday hours. Please call to confirm; Sunday hours are not published.</p></details><a class="button" href="https://www.google.com/maps/search/?api=1&query=966+Dundas+St+East+Mississauga">Get directions ↗</a></article><article class="location"><p class="eyebrow">EGLINTON ANIMAL HOSPITAL</p><h2>Our Eglinton location.</h2><address>3435 Eglinton Ave W, Unit 1<br>Mississauga, ON L5M 7Z5</address><p><a href="tel:+19056078400">(905) 607-8400</a><br><a href="mailto:eglintonstaff2007@gmail.com">eglintonstaff2007@gmail.com</a></p><details class="hours-dropdown"><summary>Opening hours &amp; availability</summary><dl><div><dt>Mon – Fri</dt><dd>8 A.M – 8 P.M</dd></div><div><dt>Saturday</dt><dd>9 A.M – 8 P.M</dd></div></dl><p class="field-note">Please call to confirm current availability. Sunday hours are not published.</p></details><a class="button" href="https://www.google.com/maps/search/?api=1&query=3435+Eglinton+Ave+W+Mississauga">Get directions ↗</a></article></div>'''
 
 
 team_names = [('Dr V Singla','Dr-V-Singla.jpg'),('Dr G Pandher','g_pandher.jpg'),('Dr H Bansal','Dr-H-Bansal.jpg'),('Dr S Pandher','Dr-S-Pandher.jpg')]
@@ -235,17 +283,17 @@ for record in records:
     elif slug == 'blog':
         body += '<section class="wrap section">' + cards(posts) + '</section>'
     elif slug == 'contact-us':
-        body += '<section class="wrap section"><p>Have questions or need to book an appointment? Reach out to either clinic below.</p>' + contact_cards() + '<div class="map-panel"><iframe title="Dundas East Animal Hospital map" src="https://maps.google.com/maps?q=966%20dundas%20St.E.%2C%20Mississauga%2C%20ON%2C%20Canada%2C%20Ontario&amp;t=m&amp;z=16&amp;output=embed" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe></div><details class="source-archive"><summary>Original contact page wording & social labels</summary><div class="source-content">' + original_body(record) + '</div></details></section>'
+        body += '<section class="wrap section"><p>Have questions or need to book an appointment? Reach out to either clinic below.</p>' + contact_cards() + '<details class="map-dropdown"><summary>View the Dundas East location map</summary><div class="map-panel"><iframe title="Dundas East Animal Hospital map" src="https://maps.google.com/maps?q=966%20dundas%20St.E.%2C%20Mississauga%2C%20ON%2C%20Canada%2C%20Ontario&amp;t=m&amp;z=16&amp;output=embed" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe></div></details><details class="source-archive"><summary>Original contact page wording & social labels</summary><div class="source-content">' + original_body(record) + '</div></details></section>'
     elif slug in LEGACY:
         if slug == 'services':
-            body += '<section class="wrap section"><h2>Care for every stage of life.</h2>' + cards([by_slug[s] for s in SERVICES]) + '</section>'
+            body += '<section class="wrap section"><h2>Care for every stage of life.</h2>' + service_menu() + '</section>'
         elif slug == 'faq':
             body += f'<section class="wrap section"><h2>Questions? Let’s talk.</h2><p>The original FAQ contains template answers. For appointments, availability and accepted payment methods, please <a class="text-link" href="{href("contact-us")}">contact the clinic</a>.</p></section>'
         body += '<section class="wrap legacy-notice"><h2>Original template content, retained for review</h2><p>This published page on the previous site contains unfinished template text, example prices, contacts or claims. It is preserved below for a complete content review and does not describe verified clinic services, prices or availability.</p><details class="source-archive"><summary>View all original page content</summary><div class="source-content">' + original_body(record) + '</div></details></section>'
     else:
         if record['kind'] == 'posts':
             body += f'<div class="wrap article-meta">Originally published <time datetime="{record["date"]}">{record["date"][:10]}</time> · Original hospital article</div>'
-        body += '<section class="wrap article-layout"><article class="source-content">' + image_for(record) + original_body(record) + '</article><aside class="article-sidebar"><p class="eyebrow">HERE FOR YOUR PET</p><h2>A question about care?</h2><p>Talk with our team about your pet’s individual needs.</p><a class="button" href="tel:+19058038400">Call (905) 803-8400</a><h3>Explore our services</h3><ul>' + service_links + '</ul></aside></section>'
+        body += '<section class="wrap article-layout"><article class="source-content">' + image_for(record) + folded_body(record) + '</article><aside class="article-sidebar"><p class="eyebrow">HERE FOR YOUR PET</p><h2>A question about care?</h2><p>Talk with our team about your pet’s individual needs.</p><a class="button" href="tel:+19058038400">Call (905) 803-8400</a><details class="sidebar-services"><summary>Explore our services</summary><ul>' + service_links + '</ul></details></aside></section>'
         if record['kind'] == 'posts':
             body += '<section class="wrap section"><p class="eyebrow">KEEP READING</p><h2>More from the pet health journal.</h2>' + cards([p for p in posts if p['id']!=record['id']][:3]) + '</section>'
     body += f'<section class="wrap page-cta"><h2>Let’s take the next step together.</h2><a class="button" href="{href("contact-us")}">Contact our team ↗</a></section>'
@@ -272,7 +320,7 @@ home_source = clean(home_record['content']['rendered'])
 # Preserve the full original home copy and all eight Google review excerpts in a readable section.
 # Repeated blog previews remain here as source content; complete articles have their own routes.
 home_source = re.sub(r'<[^>]+>\s*(?:Lorem ipsum[^<]*|No content is added yet\.)\s*</[^>]+>', '', home_source, flags=re.I)
-home_body = hero + '<section class="wrap section"><div class="section-heading"><div><p class="eyebrow">COMPLETE CARE, CLOSE TO HOME</p><h2>Our veterinary services.</h2></div><a class="text-link" href="'+href('services')+'">Explore all services ↗</a></div>' + cards([by_slug[s] for s in SERVICES]) + '</section>'
+home_body = hero + '<section class="wrap section"><div class="section-heading"><div><p class="eyebrow">COMPLETE CARE, CLOSE TO HOME</p><h2>Our veterinary services.</h2></div><a class="text-link" href="'+href('services')+'">Explore all services ↗</a></div>' + service_menu() + '</section>'
 features = [
     ('Experienced team', 'A skilled, dedicated staff with a true passion for animals. Our veterinarians and support staff bring years of trusted expertise.'),
     ('Modern & clean facility', 'A safe, hygienic, and welcoming environment for you and your pet.'),
@@ -281,9 +329,9 @@ features = [
     ('Modern technology', 'Advanced diagnostic and treatment tools support your pet’s care.'),
     ('Convenient services', 'From consultations to flexible appointments, we make pet care easy.')
 ]
-home_body += '<section class="hospital-story"><div class="wrap section"><p class="eyebrow">WHY CHOOSE DUNDAS EAST?</p><h2>Your pet’s health and happiness.<br>Our top priority.</h2><p class="story-intro">From routine checkups to advanced treatments, we’re here with compassionate, expert care every step of the way.</p><div class="feature-grid">' + ''.join('<article><h3>'+title+'</h3><p>'+text+'</p></article>' for title,text in features) + '</div><div class="care-overview"><div><h3>Personalized, comprehensive care.</h3><p>Our team, modern diagnostics and clean facility support care tailored to your pet, from routine exams to advanced treatments.</p><ul><li>Wellness exams, vaccinations, surgeries and dental care.</li><li>Digital X-rays and ultrasound for precise results.</li><li>Convenient appointments and easy scheduling.</li></ul></div><div><h3>Don’t hesitate to contact us.</h3><p>Whether it’s a quick question or an urgent concern, our friendly team is here to assist you and your pet.</p><p>The original site says “Available anytime your pet needs urgent care.” Please call to confirm availability; this demo does not confirm 24-hour service.</p><a class="button" href="'+href('contact-us')+'">Contact our team ↗</a></div></div><details class="source-archive"><summary>Read the original homepage wording in full</summary><div class="source-content">' + home_source + '</div></details></div></section>'
+home_body += '<section class="hospital-story"><div class="wrap section"><p class="eyebrow">WHY CHOOSE DUNDAS EAST?</p><h2>Your pet’s health and happiness.<br>Our top priority.</h2><p class="story-intro">From routine checkups to advanced treatments, we’re here with compassionate, expert care every step of the way.</p><div class="feature-grid">' + ''.join(disclosure(title, '<p>'+text+'</p>') for title,text in features) + '</div><details class="care-details"><summary>Our approach, care options &amp; urgent enquiries</summary><div class="care-overview"><div><h3>Personalized, comprehensive care.</h3><p>Our team, modern diagnostics and clean facility support care tailored to your pet, from routine exams to advanced treatments.</p><ul><li>Wellness exams, vaccinations, surgeries and dental care.</li><li>Digital X-rays and ultrasound for precise results.</li><li>Convenient appointments and easy scheduling.</li></ul></div><div><h3>Don’t hesitate to contact us.</h3><p>Whether it’s a quick question or an urgent concern, our friendly team is here to assist you and your pet.</p><p>The original site says “Available anytime your pet needs urgent care.” Please call to confirm availability; this demo does not confirm 24-hour service.</p><a class="button" href="'+href('contact-us')+'">Contact our team ↗</a></div></div></details><details class="source-archive"><summary>Read the original homepage wording in full</summary><div class="source-content">' + home_source + '</div></details></div></section>'
 reviews = home_record.get('reviews', [])
-home_body += '<section class="wrap section"><p class="eyebrow">OUR COMMUNITY</p><div class="section-heading"><h2>Kind words from pet families.</h2><div><strong>EXCELLENT</strong><p class="field-note">Based on 235 reviews on the original website</p></div></div><p class="field-note">Google review excerpts retained from the original website snapshot; this is not a live rating feed. The original widget states that Trustindex verified Google as the review source.</p><div class="reviews-grid">' + ''.join('<figure><blockquote>'+html.escape(review['text'])+'</blockquote><figcaption>'+html.escape(review['name'])+' <span>· Google review</span></figcaption></figure>' for review in reviews) + '</div></section>'
+home_body += '<section class="wrap section"><p class="eyebrow">OUR COMMUNITY</p><div class="section-heading"><h2>Kind words from pet families.</h2><div><strong>EXCELLENT</strong><p class="field-note">Based on 235 reviews on the original website</p></div></div><p class="field-note">Google review excerpts retained from the original website snapshot; this is not a live rating feed. The original widget states that Trustindex verified Google as the review source.</p><details class="reviews-dropdown"><summary>Read all 8 client reviews</summary><div class="reviews-grid">' + ''.join('<figure><blockquote>'+html.escape(review['text'])+'</blockquote><figcaption>'+html.escape(review['name'])+' <span>· Google review</span></figcaption></figure>' for review in reviews) + '</div></details></section>'
 home_body += '<section class="wrap section"><div class="section-heading"><div><p class="eyebrow">MEET YOUR TEAM</p><h2>People behind the care.</h2></div><a class="text-link" href="'+href('team')+'">Meet all four doctors ↗</a></div><div class="doctor-grid">' + ''.join(f'<article><img src="{BASE}/assets/{image}" alt="{name}" width="820" height="1024" loading="lazy"><h3>{name}</h3><p>DVM, BVSc &amp; AH</p></article>' for name,image in team_names) + '</div></section>'
 home_body += portal + '<section class="wrap section"><div class="section-heading"><div><p class="eyebrow">THE PET HEALTH JOURNAL</p><h2>Helpful reading. Healthier pets.</h2></div><a class="text-link" href="'+href('blog')+'">All eight articles ↗</a></div>'+cards(posts[:3])+'</section><section class="wrap section"><p class="eyebrow">TWO MISSISSAUGA LOCATIONS</p><h2>Find your familiar place.</h2>'+contact_cards()+'</section>'
 home_html = page(home_record, home_body)

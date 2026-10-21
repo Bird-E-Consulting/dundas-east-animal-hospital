@@ -9,6 +9,8 @@ A responsive website redesign and interactive client payment portal demo, prepar
 - Four illustrative pet products, category filters, cart quantities and totals.
 - Fictional invoice lookup: `DEMO-1042`, client code `PET-2026`.
 - Checkout simulation and demonstration receipt. **No payment processing, card fields, real invoices, orders, accounts, or personal data collection.**
+- Native keyboard-accessible dropdowns for services, hospital information, reviews, opening hours and full article sections. All original text remains in the HTML.
+- SVG icons replace font-based pictographs and product emojis on all screen sizes.
 - Keyboard-accessible tabs, responsive layouts, reduced-motion support and semantic HTML.
 
 ## Run
